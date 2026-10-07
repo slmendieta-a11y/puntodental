@@ -1,0 +1,86 @@
+[
+    {
+        "fecha": "10/10/2026",
+        "hora": "10:00 hs",
+        "paciente": "Juan Pérez",
+        "motivo": "Control anual",
+        "telefono": "+59899123456"
+    },
+    {
+        "fecha": "15/10/2026",
+        "hora": "11:30 hs",
+        "paciente": "María Silva",
+        "motivo": "Primera vez",
+        "telefono": "+59899654321"
+    },
+    {
+        "fecha": "16/10/2026",
+        "hora": "09:00 hs",
+        "paciente": "dfdf",
+        "motivo": "fdbdf",
+        "telefono": "dfbdfb"
+    },
+    {
+        "fecha": "24/10/2026",
+        "hora": "09:00 hs",
+        "paciente": "Santiago",
+        "motivo": "Higiene",
+        "telefono": "+59899978979"
+    },
+    {
+        "fecha": "17/10/2026",
+        "hora": "09:00 hs",
+        "paciente": "Santiago",
+        "motivo": "asldfkj",
+        "telefono": "+5989997897"
+    },
+    {
+        "fecha": "23/10/2026",
+        "hora": "09:00 hs",
+        "paciente": "asdf",
+        "motivo": "asdf",
+        "telefono": "+598assdf"
+    },
+    {
+        "fecha": "25/10/2026",
+        "hora": "10:00 hs",
+        "paciente": "qwerqwer",
+        "motivo": "qwer",
+        "telefono": "+598qwer"
+    },
+    {
+        "fecha": "25/10/2026",
+        "hora": "09:00 hs",
+        "paciente": "Termo y mate",
+        "motivo": "termo",
+        "telefono": "+598"
+    },
+    {
+        "fecha": "25/10/2026",
+        "hora": "11:00 hs",
+        "paciente": "wwww",
+        "motivo": "wwwww",
+        "telefono": "+598www"
+    },
+    {
+        "fecha": "31/10/2026",
+        "hora": "10:00 hs",
+        "paciente": "Esto esta mal",
+        "motivo": "A ver",
+        "telefono": "+598www"
+    },
+    {
+        "fecha": "05/10/2026",
+        "hora": "10:00 hs",
+        "paciente": "A ver que no",
+        "motivo": "asdf",
+        "telefono": "+598"
+    },
+    {
+        "fecha": "25/10/2026",
+        "hora": "11:10 hs",
+        "paciente": "Santi",
+        "motivo": "Santi",
+        "telefono": "+59899978979"
+    }
+]
