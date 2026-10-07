@@ -378,5 +378,5 @@ with col_der:
                 st.error(f"⚠️ Error: El horario {hora_seleccionada} ya fue ocupado.")
             elif nombre_paciente.strip():
                 nuevo_t = {
-                    "fecha": st.session_
+                    "fecha": st.session_state.fecha_activa
                     }
