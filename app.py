@@ -372,11 +372,22 @@ with col_der:
         st.button(f"🔴 Ocupado - {hora_seleccionada}", key=f"btn_ocupado_{clinica_actual}", disabled=True, use_container_width=True)
         st.warning(f"⚠️ El horario seleccionado ({hora_seleccionada}) ya se encuentra ocupado en {clinica_actual}.")
     else:
-        if st.button(f"🟢 Confirmar Reserva ({hora_seleccionada})", key=f"btn_libre_{clinica_actual}", use_container_width=True):
+       if st.button(f"🟢 Confirmar Reserva ({hora_seleccionada})", key=f"btn_libre_{clinica_actual}", use_container_width=True):
             ocupado_check = any(t["fecha"] == st.session_state.fecha_activa and t["hora"] == hora_seleccionada for t in turnos_clinica)
             if ocupado_check:
                 st.error(f"⚠️ Error: El horario {hora_seleccionada} ya fue ocupado.")
             elif nombre_paciente.strip():
                 nuevo_t = {
-                    "fecha": st.session_state.fecha_activa
-                    }
+                    "fecha": st.session_state.fecha_activa,
+                    "hora": hora_seleccionada,
+                    "paciente": nombre_paciente.strip(),
+                    "motivo": motivo_consulta.strip() if motivo_consulta.strip() else "Consulta General",
+                    "telefono": telefono_paciente.strip() if telefono_paciente.strip() else "+59800000000"
+                }
+                turnos_clinica.append(nuevo_t)
+                db_general[clinica_actual] = turnos_clinica
+                guardar_turnos_disco(db_general)
+                st.success(f"¡Turno confirmado para {nombre_paciente} a las {hora_seleccionada} en {clinica_actual}!")
+                st.rerun()
+            else:
+                st.warning("Ingrese el nombre del paciente antes de reservar.")
