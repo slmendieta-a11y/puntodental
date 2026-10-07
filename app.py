@@ -379,3 +379,4 @@ with col_der:
             elif nombre_paciente.strip():
                 nuevo_t = {
                     "fecha": st.session_
+                    }
