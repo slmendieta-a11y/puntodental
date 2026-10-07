@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 DB_FILE = "turnos_sucursales_db.json"
-ARCHIVO_LOGO = "logo.png"  # Cambia esto por el nombre exacto de tu archivo de logo si es diferente
+ARCHIVO_LOGO = "logo.png"
 
 # ==========================================
 # CONFIGURACIÓN DE TÍTULOS Y LOGO PRINCIPAL
@@ -18,14 +18,13 @@ st.set_page_config(
     page_title=TEXTO_TITULO_PESTAÑA, page_icon=ICONO_PESTAÑA, layout="wide"
 )
 
-# Estilos CSS generales (incluyendo la eliminación de la barra superior blanca de Streamlit)
+# Estilos CSS generales
 st.markdown("""
     <style>
     .stApp {
         background-color: #2b3b4e !important;
         color: #ffffff !important;
     }
-    /* Ocultar / oscurecer la barra superior por defecto de Streamlit */
     header[data-testid="stHeader"] {
         background-color: #2b3b4e !important;
     }
@@ -36,8 +35,6 @@ st.markdown("""
     h1, h2, h3, h4, h5, h6, span, label, .stMarkdown, p {
         color: #ffffff !important;
     }
-
-    /* Botones de días y horarios: Fondo blanco y texto oscuro garantizado */
     div.stButton > button {
         background-color: #ffffff !important;
         color: #1f2a37 !important;
@@ -56,8 +53,6 @@ st.markdown("""
     div.stButton > button:hover *, div.stButton > button:hover p, div.stButton > button:hover span {
         color: #ffffff !important;
     }
-
-    /* Tarjetas de consultas */
     .consulta-card {
         background: #ffffff !important;
         color: #1f2a37 !important;
@@ -125,10 +120,9 @@ def guardar_turnos_disco(turnos):
     with open(DB_FILE, "w", encoding="utf-8") as f:
         json.dump(turnos, f, ensure_ascii=False, indent=4)
 
-# Cargar base de datos general de sucursales
 db_general = cargar_turnos_disco()
 
-# --- BARRA LATERAL: SELECCIÓN DE SUCURSAL Y LOGO ---
+# --- BARRA LATERAL ---
 with st.sidebar:
     if os.path.exists(ARCHIVO_LOGO):
         st.image(ARCHIVO_LOGO, use_container_width=True)
@@ -136,7 +130,6 @@ with st.sidebar:
     st.markdown(f"### {ICONO_PESTAÑA} {TITULO_ENCABEZADO_APP}")
     sucursales_disponibles = ["Centro", "Gori", "Colón"]
     
-    # Asegurar que la sucursal activa se mantenga en session_state para evitar reseteos
     if "sucursal_activa" not in st.session_state:
         st.session_state.sucursal_activa = "Centro"
 
@@ -169,7 +162,6 @@ turnos_sucursal = db_general[sucursal_actual]
 if "fecha_activa" not in st.session_state:
     st.session_state.fecha_activa = "15/10/2026"
 
-# Encabezado principal limpio con o sin logo al lado del título
 col_tit_1, col_tit_2 = st.columns([0.1, 0.9])
 with col_tit_1:
     if os.path.exists(ARCHIVO_LOGO):
@@ -265,7 +257,6 @@ with col_izq:
             
             st.markdown(f'<a href="{url_wpp}" target="_blank" style="text-decoration:none;"><div style="background-color: #25d366; color: white; padding: 8px 12px; border-radius: 6px; text-align: center; font-weight: bold; margin-bottom: 10px; font-size: 14px;">💬 Enviar WhatsApp a {t["paciente"]}</div></a>', unsafe_allow_html=True)
         
-        # --- SECCIÓN DE GESTIÓN (MODIFICAR, CAMBIAR SUCURSAL / ELIMINAR) ---
         st.markdown("#### ⚙️ Gestionar Turnos de este Día")
         opciones_gestion = [f"{t['hora']} - {t['paciente']}" for t in turnos_filtrados]
         turno_seleccionado_str = st.selectbox("Seleccione turno a modificar, cambiar de sucursal o eliminar", opciones_gestion, key=f"gestion_{sucursal_actual}_{st.session_state.fecha_activa}")
@@ -365,4 +356,38 @@ with col_der:
     st.markdown("#### Seleccionar Horario del Turno:")
     col_h, col_m_min = st.columns(2)
     with col_h:
-        horas_disponibles =
+        horas_disponibles = [f"{h:02d}" for h in range(0, 24)]
+        hora_sel = st.selectbox("Hora", horas_disponibles, index=9, key=f"sel_h_{sucursal_actual}")
+    with col_m_min:
+        minutos_disponibles = [f"{m:02d}" for m in range(0, 60, 5)]
+        minuto_sel = st.selectbox("Minutos", minutos_disponibles, index=0, key=f"sel_m_{sucursal_actual}")
+        
+    hora_seleccionada = f"{hora_sel}:{minuto_sel} hs"
+    
+    ocupado = any(t["fecha"] == st.session_state.fecha_activa and t["hora"] == hora_seleccionada for t in turnos_sucursal)
+    
+    st.markdown(f"**Horario elegido:** <span style='color: #60a5fa;'>{hora_seleccionada}</span>", unsafe_allow_html=True)
+    
+    if ocupado:
+        st.button(f"🔴 Ocupado - {hora_seleccionada}", key=f"btn_ocupado_{sucursal_actual}", disabled=True, use_container_width=True)
+        st.warning(f"⚠️ El horario seleccionado ({hora_seleccionada}) ya se encuentra ocupado en {sucursal_actual}.")
+    else:
+        if st.button(f"🟢 Confirmar Reserva ({hora_seleccionada})", key=f"btn_libre_{sucursal_actual}", use_container_width=True):
+            ocupado_check = any(t["fecha"] == st.session_state.fecha_activa and t["hora"] == hora_seleccionada for t in turnos_sucursal)
+            if ocupado_check:
+                st.error(f"⚠️ Error: El horario {hora_seleccionada} ya fue ocupado.")
+            elif nombre_paciente.strip():
+                nuevo_t = {
+                    "fecha": st.session_state.fecha_activa,
+                    "hora": hora_seleccionada,
+                    "paciente": nombre_paciente.strip(),
+                    "motivo": motivo_consulta.strip() if motivo_consulta.strip() else "Consulta General",
+                    "telefono": telefono_paciente.strip() if telefono_paciente.strip() else "+59800000000"
+                }
+                turnos_sucursal.append(nuevo_t)
+                db_general[sucursal_actual] = turnos_sucursal
+                guardar_turnos_disco(db_general)
+                st.success(f"¡Turno confirmado para {nombre_paciente} a las {hora_seleccionada} en {sucursal_actual}!")
+                st.rerun()
+            else:
+                st.warning("Ingrese el nombre del paciente antes de reservar.")
