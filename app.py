@@ -14,23 +14,6 @@ ICONO_PESTAÑA = "🦷"
 TITULO_ENCABEZADO_APP = "Punto Dental"  
 # ==========================================
 
-def cargar_turnos_disco():
-    if os.path.exists(DB_FILE):
-        try:
-            with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except:
-            pass
-    return {
-        "Centro": [{"fecha": "15/10/2026", "hora": "10:00 hs", "paciente": "Juan Pérez", "motivo": "Control anual", "telefono": "+59899123456"}],
-        "Gori": [],
-        "Colón": []
-    }
-
-def guardar_turnos_disco(turnos):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(turnos, f, ensure_ascii=False, indent=4)
-
 st.set_page_config(
     page_title=TEXTO_TITULO_PESTAÑA, page_icon=ICONO_PESTAÑA, layout="wide"
 )
@@ -89,6 +72,59 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# ==========================================
+# SISTEMA DE SEGURIDAD (CONTRASEÑA FIJA)
+# ==========================================
+def verificar_password():
+    if "autenticado" not in st.session_state:
+        st.session_state.autenticado = False
+
+    if st.session_state.autenticado:
+        return True
+
+    with st.sidebar:
+        if os.path.exists(ARCHIVO_LOGO):
+            st.image(ARCHIVO_LOGO, use_container_width=True)
+        st.markdown(f"### {ICONO_PESTAÑA} {TITULO_ENCABEZADO_APP}")
+        st.warning("🔒 Sistema Privado de la Clínica")
+        
+        input_pass = st.text_input("Ingrese la Contraseña", type="password")
+        
+        if st.button("Ingresar", use_container_width=True):
+            if input_pass == "1234":
+                st.session_state.autenticado = True
+                st.rerun()
+            else:
+                st.error("Contraseña incorrecta")
+        
+        st.markdown("---")
+        st.markdown("<small style='color: #9ca3af;'>Acceso restringido únicamente al personal autorizado de la clínica.</small>", unsafe_allow_html=True)
+    
+    return False
+
+if not verificar_password():
+    st.stop()
+
+# ==========================================
+# LÓGICA DE DATOS Y FUNCIONES PRINCIPALES
+# ==========================================
+def cargar_turnos_disco():
+    if os.path.exists(DB_FILE):
+        try:
+            with open(DB_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            pass
+    return {
+        "Centro": [{"fecha": "15/10/2026", "hora": "10:00 hs", "paciente": "Juan Pérez", "motivo": "Control anual", "telefono": "+59899123456"}],
+        "Gori": [],
+        "Colón": []
+    }
+
+def guardar_turnos_disco(turnos):
+    with open(DB_FILE, "w", encoding="utf-8") as f:
+        json.dump(turnos, f, ensure_ascii=False, indent=4)
+
 # Cargar base de datos general de sucursales
 db_general = cargar_turnos_disco()
 
@@ -118,6 +154,10 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(f"**Sucursal Activa:** <span style='color: #60a5fa;'>{st.session_state.sucursal_activa}</span>", unsafe_allow_html=True)
     st.markdown("Las agendas y turnos se guardan de forma independiente para cada sede.")
+    
+    if st.button("🔒 Cerrar Sesión", use_container_width=True):
+        st.session_state.autenticado = False
+        st.rerun()
 
 sucursal_actual = st.session_state.sucursal_activa
 
@@ -253,18 +293,15 @@ with col_izq:
             nueva_sucursal_destino = st.selectbox("Seleccionar nueva sucursal", otras_sucursales, key=f"sel_nueva_suc_{sucursal_actual}_{indice_real}")
             
             if st.button("🚀 Confirmar Cambio de Sucursal", key=f"btn_conf_mov_{sucursal_actual}_{indice_real}", use_container_width=True):
-                # Verificar conflictos en la sucursal de destino
                 turnos_destino = db_general.get(nueva_sucursal_destino, [])
                 conflicto_destino = any(t["fecha"] == t_seleccionado["fecha"] and t["hora"] == t_seleccionado["hora"] for t in turnos_destino)
                 
                 if conflicto_destino:
                     st.error(f"⚠️ El horario {t_seleccionado['hora']} del día {t_seleccionado['fecha']} ya está ocupado en la sucursal {nueva_sucursal_destino}.")
                 else:
-                    # Sacar de la sucursal actual
                     turnos_sucursal.pop(indice_real)
                     db_general[sucursal_actual] = turnos_sucursal
                     
-                    # Agregar a la sucursal de destino
                     if nueva_sucursal_destino not in db_general:
                         db_general[nueva_sucursal_destino] = []
                     db_general[nueva_sucursal_destino].append(t_seleccionado)
@@ -283,12 +320,12 @@ with col_izq:
             
             col_eh, col_em = st.columns(2)
             with col_eh:
-                horas_disp = [f"{h:02d}" for h in range(0, 24)]  # Horas completas de 00 a 23
+                horas_disp = [f"{h:02d}" for h in range(0, 24)]
                 h_actual = t_seleccionado['hora'].split(":")[0]
                 idx_h = horas_disp.index(h_actual) if h_actual in horas_disp else 9
                 e_hora = st.selectbox("Nueva Hora", horas_disp, index=idx_h, key=f"edit_h_{sucursal_actual}_{indice_real}")
             with col_em:
-                min_disp = [f"{m:02d}" for m in range(0, 60, 5)]  # Minutos cada 5 minutos para total libertad
+                min_disp = [f"{m:02d}" for m in range(0, 60, 5)]
                 m_actual = t_seleccionado['hora'].split(":")[1].replace(" hs", "")
                 idx_m = min_disp.index(m_actual) if m_actual in min_disp else 0
                 e_min = st.selectbox("Nuevos Minutos", min_disp, index=idx_m, key=f"edit_m_{sucursal_actual}_{indice_real}")
@@ -328,38 +365,4 @@ with col_der:
     st.markdown("#### Seleccionar Horario del Turno:")
     col_h, col_m_min = st.columns(2)
     with col_h:
-        horas_disponibles = [f"{h:02d}" for h in range(0, 24)]  # Rango completo 00 a 23 hs
-        hora_sel = st.selectbox("Hora", horas_disponibles, index=9, key=f"sel_h_{sucursal_actual}")
-    with col_m_min:
-        minutos_disponibles = [f"{m:02d}" for m in range(0, 60, 5)]  # Minutos flexibles cada 5 min
-        minuto_sel = st.selectbox("Minutos", minutos_disponibles, index=0, key=f"sel_m_{sucursal_actual}")
-        
-    hora_seleccionada = f"{hora_sel}:{minuto_sel} hs"
-    
-    ocupado = any(t["fecha"] == st.session_state.fecha_activa and t["hora"] == hora_seleccionada for t in turnos_sucursal)
-    
-    st.markdown(f"**Horario elegido:** <span style='color: #60a5fa;'>{hora_seleccionada}</span>", unsafe_allow_html=True)
-    
-    if ocupado:
-        st.button(f"🔴 Ocupado - {hora_seleccionada}", key=f"btn_ocupado_{sucursal_actual}", disabled=True, use_container_width=True)
-        st.warning(f"⚠️ El horario seleccionado ({hora_seleccionada}) ya se encuentra ocupado en {sucursal_actual}.")
-    else:
-        if st.button(f"🟢 Confirmar Reserva ({hora_seleccionada})", key=f"btn_libre_{sucursal_actual}", use_container_width=True):
-            ocupado_check = any(t["fecha"] == st.session_state.fecha_activa and t["hora"] == hora_seleccionada for t in turnos_sucursal)
-            if ocupado_check:
-                st.error(f"⚠️ Error: El horario {hora_seleccionada} ya fue ocupado.")
-            elif nombre_paciente.strip():
-                nuevo_t = {
-                    "fecha": st.session_state.fecha_activa,
-                    "hora": hora_seleccionada,
-                    "paciente": nombre_paciente.strip(),
-                    "motivo": motivo_consulta.strip() if motivo_consulta.strip() else "Consulta General",
-                    "telefono": telefono_paciente.strip() if telefono_paciente.strip() else "+59800000000"
-                }
-                turnos_sucursal.append(nuevo_t)
-                db_general[sucursal_actual] = turnos_sucursal
-                guardar_turnos_disco(db_general)
-                st.success(f"¡Turno confirmado para {nombre_paciente} a las {hora_seleccionada} en {sucursal_actual}!")
-                st.rerun()
-            else:
-                st.warning("Ingrese el nombre del paciente antes de reservar.")
+        horas_disponibles =
