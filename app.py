@@ -218,8 +218,14 @@ with col_izq:
                 str_dia = dia_actual_iter.strftime("%d/%m/%Y")
                 num_dia_str = dia_actual_iter.strftime('%d')
                 
-                with cols_semana[dia_idx]:
-                    if st.button(num_dia_str, key=f"btn_dia_{clinica_actual}_{str_dia}", use_container_width=True):
+with cols_semana[dia_idx]:
+                    # Verificamos si este día coincide con la fecha activa de la sesión
+                    dia_seleccionado = (str_dia == st.session_state.fecha_activa)
+                    
+                    # Definimos la etiqueta visual del botón
+                    label_boton = f"✅ {num_dia_str}" if dia_seleccionado else num_dia_str
+                    
+                    if st.button(label_boton, key=f"btn_dia_{clinica_actual}_{str_dia}"):
                         st.session_state.fecha_activa = str_dia
                         st.rerun()
                         
